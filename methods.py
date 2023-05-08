@@ -58,26 +58,26 @@ def grad_const(jac, x0=None, args=(), callback=None,
     x = np.array(x0)
 
     for it in range(maxiter):
-        s = -jac(x,*args)
+        s = -jac(x,*kwargs.get("vec"))
         x = x + stepsize*s
 
         if callback is not None:
           if callback_step:
             callback(x)
           else:
-            callback(np.linalg.norm(jac(x))-tol)
-        if np.linalg.norm(jac(x)) < tol:
+            callback(np.linalg.norm(jac(x,*kwargs.get("vec")))-tol)
+        if np.linalg.norm(jac(x,*kwargs.get("vec"))) < tol:
             break
     
     
-    success = np.linalg.norm(jac(x)) < tol
+    success = np.linalg.norm(jac(x,*kwargs.get("vec"))) < tol
 
     if success:
         msg = "Optimization successful"
     else:
         msg = "Optimization failed"
     
-    return OptimizeResult(x=x,success=success,fun=jac(x),nit=it+1) 
+    return OptimizeResult(x=x,success=success,fun=jac(x,*kwargs.get("vec")),nit=it+1) 
 
 
 def bisection(dfun, bounds=None, args=(), callback=None,
@@ -218,26 +218,26 @@ def cauchy(jac, x0=None, args=(), callback=None,
     l = max_stepsize
 
     for it in range(maxiter):
-        s = -jac(x)
-        fi = lambda l : jac(x+l*s)@s
+        s = -jac(x,*kwargs.get("vec"))
+        fi = lambda l : jac(x+l*s,*kwargs.get("vec"))@s
         bis = bisection(fi,(0,max_stepsize),(0,max_stepsize))
         stepsize = bis.x
         x = x + stepsize*s
         if callback is not None:
-            callback(np.linalg.norm(jac(x))-tol)
+            callback(np.linalg.norm(jac(x,*kwargs.get("vec")))-tol)
         
-        if np.linalg.norm(jac(x)) < tol:
+        if np.linalg.norm(jac(x,*kwargs.get("vec"))) < tol:
             break
     
     
-    success = np.linalg.norm(jac(x)) < tol
+    success = np.linalg.norm(jac(x,*kwargs.get("vec"))) < tol
 
     if success:
         msg = "Optimization successful"
     else:
         msg = "Optimization failed"
     
-    return OptimizeResult(x=x,success=success,fun=jac(x),nit=it+1) 
+    return OptimizeResult(x=x,success=success,fun=jac(x,*kwargs.get("vec")),nit=it+1) 
 
 
 
@@ -286,11 +286,11 @@ def backtracking_line_search(fun, jac, x0, args=(), s=None, max_stepsize=1,
     
     stepsize = max_stepsize
 
-    fx = fun(x, *args)
+    fx = fun(x, *args[:-1])
     
     
     for it in range(maxiter):
-        if fun(x + stepsize*s, *args) > fx + c*stepsize*df_s:
+        if fun(x + stepsize*s, *args[:-1]) > fx + c*stepsize*df_s:
             stepsize *= rho
         else:
             return stepsize
@@ -356,21 +356,21 @@ def backtrack(jac, x0=None, args=(), callback=None,
     x = np.array(x0)
 
     for it in range(maxiter):
-        s = -jac(x)
-        l = backtracking_line_search(*args,jac,x0, rho = rho, c = c,max_stepsize=maxiter_step_search)
+        s = -jac(x,*kwargs.get("vec"))
+        l = backtracking_line_search(*args,jac,x, rho = rho, c = c,max_stepsize=maxiter_step_search,args=kwargs.get("vec"))
         x = x + s*l
         if callback is not None:
-            callback(np.linalg.norm(jac(x))-tol)
+            callback(np.linalg.norm(jac(x,*kwargs.get("vec")))-tol)
         
-        if np.linalg.norm(jac(x))<tol: 
+        if np.linalg.norm(jac(x,*kwargs.get("vec")))<tol: 
             break
     
     
-    success = np.linalg.norm(jac(x)) < tol  
+    success = np.linalg.norm(jac(x,*kwargs.get("vec"))) < tol  
 
     if success:
         msg = "Optimization successful"
     else:
         msg = "Optimization failed"
     
-    return OptimizeResult(x=x,success=success,fun=jac(x),nit=it+1) 
+    return OptimizeResult(x=x,success=success,fun=jac(x,*kwargs.get("vec")),nit=it+1) 
